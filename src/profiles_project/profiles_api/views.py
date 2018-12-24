@@ -5,13 +5,14 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from . import serializers
+from rest_framework import status
 
 # Create your views here.
 
 class HelloApiView(APIView):
     """Test API View"""
 
-    serializers_class = serializers.HelloSerializer
+    serializer_class = serializers.HelloSerializer
 
     def get(self,request, format=None):
         """Return a list of APIView features"""
