@@ -8,6 +8,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework import filters
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from . import serializers
 from . import models
@@ -20,7 +21,7 @@ class HelloApiView(APIView):
 
     serializer_class = serializers.HelloSerializer
 
-    def get(self,request, format=None):
+    def get(self, request, format=None):
         """Return a list of APIView features"""
 
         an_apiview = [
@@ -48,7 +49,7 @@ class HelloApiView(APIView):
     def put(self, request, pk=None):
         """Handles updating an object."""
 
-        return Response({"method": 'put'})
+        return Response({'method': 'put'})
 
     def patch(self, request, pk=None):
         """Patch request, only updates fields provided in the request"""
@@ -63,13 +64,13 @@ class HelloApiView(APIView):
 class HelloViewSet(viewsets.ViewSet):
     """Test API ViewSet"""
 
-    serializer_class =serializers.HelloSerializer
+    serializer_class = serializers.HelloSerializer
 
     def list(self,request):
         """Return a hello message"""
 
         a_viewset = [
-            'Uses actions(list, create, retrieve, update, partial_update)',
+            'Uses actions (list, create, retrieve, update, partial_update)',
             'Automatically maps to URLs using Routers'
             'Provides more fuctionality with less code'
         ]
@@ -110,7 +111,7 @@ class HelloViewSet(viewsets.ViewSet):
         return Response({'http_method': 'DELETE'})
 
 class UserProfileViewSet(viewsets.ModelViewSet):
-    """Handles creating, creating and updating profiles"""
+    """Handles creating, creating and updating profiles."""
 
     serializer_class = serializers.UserProfileSerializer
     queryset = models.UserProfile.objects.all()
@@ -123,9 +124,23 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 class LoginViewSet(viewsets.ViewSet):
     """Checks email & password and returns an auth token."""
 
-    serializer_class =AuthTokenSerializer
+    serializer_class = AuthTokenSerializer
 
     def create(self, request):
         """Use the ObtainAuthToken APIView to validate and create a token"""
 
         return ObtainAuthToken().post(request)
+
+
+class UserProfileFeedViewSet(viewsets.ModelViewSet):
+    """Handles creating, reading and updating profile feed items"""
+
+    authentication_classes = (TokenAuthentication,)
+    serializer_class = serializers.ProfileFeedItemSerializer
+    queryset = models.ProfileFeedItem.objects.all()
+    permission_classes = (permissions.PostOwnStatus, IsAuthenticatedOrReadOnly)
+
+    def perform_create(self, serializer):
+        """Sets the user profile to the logged in user."""
+
+        serializer.save(user_profile=self.request.user)
